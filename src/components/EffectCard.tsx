@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { FONT_STACKS, SAMPLE_TEXT } from '../lib/constants';
 import { CATEGORY_LABELS, type Effect } from '../effects/registry';
 import type { Params } from '../effects/types';
@@ -43,24 +44,15 @@ export default function EffectCard({
         className="relative flex aspect-[4/3] w-full cursor-pointer items-center justify-center overflow-hidden bg-bg px-5 focus-visible:outline-offset-[-3px]"
       >
         {active ? (
-          <Preview
-            key={`preview-${token}`}
-            params={cardParams(effect)}
-            reducedMotion={reducedMotion}
-          />
+          <Suspense fallback={<CardPlaceholder />}>
+            <Preview
+              key={`preview-${token}`}
+              params={cardParams(effect)}
+              reducedMotion={reducedMotion}
+            />
+          </Suspense>
         ) : (
-          <span
-            className="select-none"
-            style={{
-              color: '#F5F5F5',
-              fontSize: 36,
-              fontWeight: 500,
-              fontFamily: FONT_STACKS.Inter,
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {SAMPLE_TEXT}
-          </span>
+          <CardPlaceholder />
         )}
         <span className="pointer-events-none absolute left-3 top-3 text-[10px] uppercase tracking-[0.18em] text-muted opacity-0 transition-opacity group-hover:opacity-100">
           Play
@@ -83,6 +75,23 @@ export default function EffectCard({
         </button>
       </div>
     </article>
+  );
+}
+
+function CardPlaceholder() {
+  return (
+    <span
+      className="select-none"
+      style={{
+        color: '#F5F5F5',
+        fontSize: 36,
+        fontWeight: 500,
+        fontFamily: FONT_STACKS.Inter,
+        letterSpacing: '-0.02em',
+      }}
+    >
+      {SAMPLE_TEXT}
+    </span>
   );
 }
 

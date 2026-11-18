@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { formatLabel, formatNote, type Effect } from '../effects/registry';
+import {
+  formatLabel,
+  formatNote,
+  type Effect,
+  type SnippetBuilder,
+} from '../effects/registry';
 import type { Format, Params } from '../effects/types';
 
 const ALL_FORMATS: Format[] = ['html', 'react', 'framer'];
@@ -23,19 +28,32 @@ function fallbackCopy(text: string): boolean {
 }
 
 export default function CodePanel({ effect, params }: Props) {
-  const snippets = useMemo(() => effect.build(params), [effect, params]);
+  const [build, setBuild] = useState<SnippetBuilder | null>(null);
   const supported = effect.meta.supportedFormats;
   const [format, setFormat] = useState<Format>(supported[0]);
   const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
+
+  useEffect(() => {
+    let cancelled = false;
+    setBuild(null);
+    effect.loadSnippets().then((module) => {
+      if (!cancelled) setBuild(() => module.build);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [effect]);
 
   useEffect(() => {
     setFormat(supported[0]);
     setStatus('idle');
   }, [effect.meta.id, supported]);
 
-  const code = snippets[format] ?? '';
+  const snippets = useMemo(() => (build ? build(params) : null), [build, params]);
+  const code = snippets?.[format] ?? '';
 
   const copy = async () => {
+    if (!code) return;
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(code);
@@ -82,12 +100,15 @@ export default function CodePanel({ effect, params }: Props) {
         <button
           type="button"
           onClick={copy}
-          className="absolute right-2 top-2 border border-line bg-surface2 px-2.5 py-1 text-[11px] text-ink transition-colors hover:border-ink"
+          disabled={!code}
+          className="absolute right-2 top-2 border border-line bg-surface2 px-2.5 py-1 text-[11px] text-ink transition-colors hover:border-ink disabled:opacity-40"
         >
           {status === 'copied' ? 'Copied' : 'Copy'}
         </button>
         <pre className="tf-modal-scroll max-h-[300px] overflow-auto border border-line bg-bg p-4 pr-20 text-[11px] leading-[1.65]">
-          <code className="whitespace-pre font-mono">{code}</code>
+          <code className="whitespace-pre font-mono">
+            {code || 'Loading snippet…'}
+          </code>
         </pre>
       </div>
 

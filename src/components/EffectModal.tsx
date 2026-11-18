@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import ControlPanel from './ControlPanel';
 import CodePanel from './CodePanel';
 import { CATEGORY_LABELS, type Effect } from '../effects/registry';
@@ -164,11 +164,13 @@ export default function EffectModal({
         <div className="grid lg:grid-cols-[1.05fr_1fr]">
           <div className="min-w-0 border-b border-line lg:border-b-0 lg:border-r">
             <div className="flex h-[260px] items-center justify-center overflow-hidden bg-bg px-5 sm:h-[300px]">
-              <Preview
-                key={previewKey}
-                params={effectiveParams}
-                reducedMotion={reducedMotion}
-              />
+              <Suspense fallback={null}>
+                <Preview
+                  key={previewKey}
+                  params={effectiveParams}
+                  reducedMotion={reducedMotion}
+                />
+              </Suspense>
             </div>
 
             <div className="space-y-4 border-t border-line p-5">

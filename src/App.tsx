@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import Hero from './components/Hero';
 import CatalogGrid from './components/CatalogGrid';
 import About from './components/About';
 import Footer from './components/Footer';
-import EffectModal from './components/EffectModal';
 import { EFFECTS, getEffect } from './effects/registry';
+
+// The editor panel (controls, presets, code) is only needed once an effect
+// is opened, so it stays out of the initial page load.
+const EffectModal = lazy(() => import('./components/EffectModal'));
 import { usePrefersReducedMotion } from './lib/usePrefersReducedMotion';
 
 function readHash(): string | null {
@@ -43,7 +46,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg text-ink">
-      <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-line bg-bg sm:bg-bg/90 sm:backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-[1200px] items-center justify-between px-6 sm:px-10">
           <a href="#top" className="text-sm font-medium tracking-[-0.01em]">
             typeframes
@@ -55,9 +58,8 @@ export default function App() {
             <a href="#about" className="transition-colors hover:text-ink">
               About
             </a>
-            {/* Replace with your own profile link. */}
             <a
-              href="https://github.com"
+              href="https://github.com/zalramadhan"
               target="_blank"
               rel="noreferrer"
               className="transition-colors hover:text-ink"
@@ -81,15 +83,17 @@ export default function App() {
       <Footer />
 
       {effect ? (
-        <EffectModal
-          key={effect.meta.id}
-          effect={effect}
-          systemReducedMotion={systemReducedMotion}
-          reducedMotion={reducedMotion}
-          motionOn={motionOn}
-          onToggleMotion={toggleMotion}
-          onClose={closeEffect}
-        />
+        <Suspense fallback={null}>
+          <EffectModal
+            key={effect.meta.id}
+            effect={effect}
+            systemReducedMotion={systemReducedMotion}
+            reducedMotion={reducedMotion}
+            motionOn={motionOn}
+            onToggleMotion={toggleMotion}
+            onClose={closeEffect}
+          />
+        </Suspense>
       ) : null}
     </div>
   );
